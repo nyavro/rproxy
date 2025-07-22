@@ -12,6 +12,7 @@ pub struct Request {
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Method {
     Get,
+    Post
 }
 
 impl TryFrom<&str> for Method {
@@ -20,6 +21,7 @@ impl TryFrom<&str> for Method {
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         match value {
             "GET" => Ok(Method::Get),
+            "POST" => Ok(Method::Post),
             m => Err(anyhow::anyhow!("unsupported method: {m}")),
         }
     }
@@ -98,6 +100,26 @@ mod tests {
                 method: Method::Get,
                 path: "/foo".to_string(),
                 headers: hashmap! { "Host".to_string() => "localhost".to_string() }
+            }
+        )
+    }
+
+    #[tokio::test]
+    async fn test_parse_post_request() {
+        let mut stream = Cursor::new(indoc!(
+            "
+            POST /foo HTTP/1.1\r\n
+            Host: localhost\r\n
+            \r\n"
+        ));
+        let req = parse_request(&mut stream).await.unwrap();
+        
+        assert_eq!(
+            req,
+            Request {
+                method: Method::Post,
+                path: "/foo".to_string(),
+                headers: hashmap! {"Host".to_string() => "localhost".to_string()}
             }
         )
     }
