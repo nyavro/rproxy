@@ -1,15 +1,13 @@
 use tokio::{io::BufStream, net::TcpListener};
 use tracing::info;
 
-mod http;
+use http::resp;
 
-use crate::http::{req, resp};
+static DEFAULT_PORT: &str = "7879";
 
-static DEFAULT_PORT: &str = "7878";
-
+// Return mock token
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize the default tracing subscriber.
     tracing_subscriber::fmt::init();
 
     let port: u16 = std::env::args()
@@ -24,21 +22,19 @@ async fn main() -> anyhow::Result<()> {
     loop {
         let (stream, addr) = listener.accept().await?;
         let mut stream = BufStream::new(stream);
-
-        // do not block the main thread, spawn a new task
         tokio::spawn(async move {
             info!(?addr, "new connection");
 
-            match req::parse_request(&mut stream).await {
-                Ok(req) => info!(?req, "incoming request"),
-                Err(e) => {
-                    info!(?e, "failed to parse request");
-                }
-            }
+            // match req::parse_request(&mut stream).await {
+            //     Ok(req) => info!(?req, "incoming request"),
+            //     Err(e) => {
+            //         info!(?e, "failed to parse request");
+            //     }
+            // }
 
             let resp = resp::Response::from_html(
-                resp::Status::NotFound,
-                include_str!("../static/404.html"),
+                resp::Status::Ok,
+                "mock_token",
             );
 
             resp.write(&mut stream).await.unwrap();

@@ -57,12 +57,14 @@ impl Response<Cursor<Vec<u8>>> {
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Status {
     NotFound,
+    Ok
 }
 
 impl Display for Status {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Status::NotFound => write!(f, "404 Not Found"),
+            Status::Ok => write!(f, "OK")
         }
     }
 }

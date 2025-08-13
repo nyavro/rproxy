@@ -3,6 +3,14 @@ name = "rproxy"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "emulator"
+path = "src/emulator/main.rs"
+
+[lib]               # Общий код (если нужно собрать как библиотеку)
+name = "http"
+path = "src/http/mod.rs"
+
 [dependencies]
 anyhow = "1.0.98"
 figment = { version = "0.10.19", features = ["toml", "env", "json"] }
