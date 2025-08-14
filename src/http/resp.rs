@@ -37,9 +37,9 @@ impl<S: AsyncRead + Unpin> Response<S> {
     }
 }
 
-impl Response<Cursor<Vec<u8>>> {
-    pub fn from_html(status: Status, data: impl ToString) -> Self {
-        let bytes = data.to_string().into_bytes();
+impl Response<Cursor<Vec<u8>>> {    
+    pub fn from_string(status: Status, data: String) -> Self {
+        let bytes = data.into_bytes();
 
         let headers = hashmap! {
             "Content-Type".to_string() => "text/html".to_string(),
@@ -51,6 +51,10 @@ impl Response<Cursor<Vec<u8>>> {
             headers,
             data: Cursor::new(bytes),
         }
+    }
+
+    pub fn from_html(status: Status, data: impl ToString) -> Self {        
+        Response::from_string(status, data.to_string())
     }
 }
 
@@ -64,7 +68,7 @@ impl Display for Status {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             Status::NotFound => write!(f, "404 Not Found"),
-            Status::Ok => write!(f, "OK")
+            Status::Ok => write!(f, "200 OK")
         }
     }
 }

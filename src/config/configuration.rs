@@ -16,7 +16,7 @@ pub struct Config {
     pub redirect_url: String
 }
 
-pub fn load_configuration() -> Result<Config, figment:Error> {
+pub fn load_configuration() -> Result<Config, figment::Error> {    
     Ok(
         Figment::new()
             .join(Json::file("config.json"))

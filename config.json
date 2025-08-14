@@ -1,0 +1,15 @@
+{
+    "redirect_url": "test2",
+    "auth_providers": {
+        "puz_auth_token": {
+            "method": "POST",
+            "url": "http://localhost:7877/puz",
+            "headers": {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            "form": {
+                "grant_type": "password"
+            }
+        }        
+    }
+}

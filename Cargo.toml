@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [[bin]]
+name = "auth_emulator"
+path = "src/auth_emulator/main.rs"
+
+[[bin]]
 name = "emulator"
 path = "src/emulator/main.rs"
 
@@ -13,6 +17,7 @@ path = "src/http/mod.rs"
 
 [dependencies]
 anyhow = "1.0.98"
+dashmap = "6.1.0"
 figment = { version = "0.10.19", features = ["toml", "env", "json"] }
 futures = "0.3.31"
 maplit = "1.0.2"

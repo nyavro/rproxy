@@ -1,7 +1,11 @@
 use futures::future::{self, FutureExt};
-use tracing::info;
 use serde::{Deserialize};
 use reqwest::{Client};
+use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
+use std::collections::HashMap;
+
+use config::configuration;
+
 
 #[derive(Deserialize, Clone)]
 pub struct AuthResponse {
@@ -9,7 +13,7 @@ pub struct AuthResponse {
     pub expires_in: u64
 }
 
-pub async fn fetch_token(provider_config: &configuration::ProviderConfig) -> Result<AuthResponse, Box<dyn std::error:Error + Send + Sync>> {
+pub async fn fetch_token(provider_config: &configuration::ProviderConfig) -> Result<AuthResponse, Box<dyn std::error::Error + Send + Sync>> {
     let client = Client::new();
     let response = client
         .post(&provider_config.url)
