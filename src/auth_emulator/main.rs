@@ -5,7 +5,6 @@ use serde_json;
 
 use http::resp;
 use http::req;
-use http::auth;
 
 static DEFAULT_PORT: &str = "7877";
 

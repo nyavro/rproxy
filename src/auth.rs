@@ -4,8 +4,7 @@ use reqwest::{Client};
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use std::collections::HashMap;
 
-use config::configuration;
-
+use crate::config::configuration;
 
 #[derive(Deserialize, Clone)]
 pub struct AuthResponse {

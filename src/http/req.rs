@@ -1,18 +1,21 @@
 use std::{collections::HashMap, hash::Hash};
-
-use tokio::io::{AsyncBufRead, AsyncBufReadExt};
+use tokio::io::{AsyncBufRead, AsyncBufReadExt, AsyncReadExt};
+use anyhow::Context;
+use tracing::info;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Request {
     pub method: Method,
     pub path: String,
     pub headers: HashMap<String, String>,
+    pub body: Vec<u8>
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Method {
     Get,
-    Post
+    Post,
+    Put
 }
 
 impl TryFrom<&str> for Method {
@@ -22,6 +25,7 @@ impl TryFrom<&str> for Method {
         match value {
             "GET" => Ok(Method::Get),
             "POST" => Ok(Method::Post),
+            "PUT" => Ok(Method::Put),
             m => Err(anyhow::anyhow!("unsupported method: {m}")),
         }
     }
@@ -62,11 +66,19 @@ pub async fn parse_request(mut stream: impl AsyncBufRead + Unpin) -> anyhow::Res
 
         headers.insert(key.to_string(), value.to_string());
     }
+    let mut body = Vec::new();
+    if let Some(len) = headers.get("content-length") {
+        let len = len.parse::<usize>().context("Invalid Content-length")?;
+        body.resize(len, 0);
+        stream.read_exact(&mut body).await
+            .context("Failed to read request body")?;
+    }
 
     Ok(Request {
         method,
         path,
         headers,
+        body
     })
 }
 
@@ -99,7 +111,8 @@ mod tests {
             Request {
                 method: Method::Get,
                 path: "/foo".to_string(),
-                headers: hashmap! { "Host".to_string() => "localhost".to_string() }
+                headers: hashmap! { "Host".to_string() => "localhost".to_string() },
+                body: vec!()
             }
         )
     }
@@ -110,7 +123,8 @@ mod tests {
             "
             POST /foo HTTP/1.1\r\n
             Host: localhost\r\n
-            \r\n"
+            Content-Length: 15\r\n
+            {\"json\":\"test\"}"
         ));
         let req = parse_request(&mut stream).await.unwrap();
         
@@ -119,7 +133,11 @@ mod tests {
             Request {
                 method: Method::Post,
                 path: "/foo".to_string(),
-                headers: hashmap! {"Host".to_string() => "localhost".to_string()}
+                headers: hashmap! {
+                    "host".to_string() => "localhost".to_string(),
+                    "content-length".to_string() => "15".to_string()
+                },
+                body: "{\"json\":\"test\"}"
             }
         )
     }
