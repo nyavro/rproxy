@@ -1,13 +1,13 @@
 use std::convert::Infallible;
-use hyper::{Body, Request, Response, Server, Client, Uri, HeaderMap};
+use hyper::{Body, Request, Response, Server, Uri};
 use hyper::service::{make_service_fn, service_fn};
-use hyper::client::HttpConnector;
 use std::net::SocketAddr;
 use crate::config::configuration;
 use std::sync::Arc;
 
 mod config;
 mod fetch_token;
+mod client;
 
 #[tokio::main]
 async fn main() {
@@ -34,13 +34,8 @@ async fn main() {
     }
 }
 
-fn init_client() -> Client<HttpConnector> {
-    let client = Client::new();
-    client
-}
-
 async fn handle_request(req: Request<Body>, config: Arc<configuration::Config>) -> Result<Response<Body>, Infallible> {    
-    let client = Client::new();
+    let client = client::init_client();
     let uri_str = config.redirect_url.clone() + req.uri().path_and_query().map_or("/", |pq| pq.as_str());
     let backend_uri: Uri = uri_str.parse().unwrap();
     let headers = fetch_token::collect_headers(req.headers(), &config).await;

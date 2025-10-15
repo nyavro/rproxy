@@ -2,6 +2,7 @@ use hyper::header::{HeaderName, HeaderValue};
 use hyper::{HeaderMap, Client, Request, Method, Body};
 use hyper::body::to_bytes;
 use serde::Deserialize;
+use crate::client::init_client;
 use crate::config::configuration;
 
 #[derive(Deserialize, Clone, Debug)]
@@ -36,7 +37,7 @@ pub async fn collect_headers(req_headers: &HeaderMap, cfg: &configuration::Confi
 }
 
 async fn fetch_token(config: &configuration::ProviderConfig) -> Result<AuthResponse, Box<dyn std::error::Error + Send + Sync>> {
-    let client = Client::new();
+    let client = init_client();
     let mut request = Request::builder()
         .method(Method::POST) 
         .uri(config.url.clone());
