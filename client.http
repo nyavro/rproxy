@@ -1,5 +1,5 @@
 # test
-POST http://localhost:7878/comments HTTP/1.1
+POST http://localhost:8081/comments HTTP/1.1
 content-type: application/json
 Authorization: Bearer {{puz_auth_token}}
 accept: application/json

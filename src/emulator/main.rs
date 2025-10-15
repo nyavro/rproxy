@@ -1,43 +1,39 @@
-use tokio::{io::BufStream, net::TcpListener};
-use tracing::info;
+use std::convert::Infallible;
+use hyper::{Body, Request, Response, Server, HeaderMap};
+use hyper::service::{make_service_fn, service_fn};
+use std::net::SocketAddr;
 
-use http::resp;
-
-static DEFAULT_PORT: &str = "7879";
-
-// Return mock token
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init();
-
-    let port: u16 = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| DEFAULT_PORT.to_string())
-        .parse()?;
-
-    let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
-
-    info!("listening on: {}", listener.local_addr()?);
-
-    loop {
-        let (stream, addr) = listener.accept().await?;
-        let mut stream = BufStream::new(stream);
-        tokio::spawn(async move {
-            info!(?addr, "new connection");
-
-            // match req::parse_request(&mut stream).await {
-            //     Ok(req) => info!(?req, "incoming request"),
-            //     Err(e) => {
-            //         info!(?e, "failed to parse request");
-            //     }
-            // }
-
-            let resp = resp::Response::from_html(
-                resp::Status::Ok,
-                "mock_token",
-            );
-
-            resp.write(&mut stream).await.unwrap();
-        });
+async fn main() {
+    let port = 7879;
+    let addr = SocketAddr::from(([127,0,0,1], port));
+    let server = Server::bind(&addr)
+        .serve(
+            make_service_fn(|_conn| async {Ok::<_, Infallible>(service_fn(handle_request))})
+        );
+    if let Err(e) = server.await {
+        println!("server error: {}", e);
     }
+}
+
+fn get_authorization_template(headers: &HeaderMap) -> Option<String> {
+    headers.iter()
+        .filter(|(header, _)| header.to_string().to_lowercase() == "authorization")
+        .flat_map(|(_, value)|
+            match value.to_str() {
+                Ok(v) => Some(v.to_string()),
+                Err(_) => None
+            }
+        )
+        .next()
+}
+
+async fn handle_request(req: Request<Body>) -> Result<Response<Body>, Infallible> {
+    let auth_header = get_authorization_template(&req.headers());
+    Ok(
+        Response::builder()
+            .status(200)
+            .body(Body::from(req.uri().to_string() + "::::" + &auth_header.unwrap_or("none".to_string())))
+            .unwrap()
+    )
 }

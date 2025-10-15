@@ -1,46 +1,26 @@
-use tokio::{io::BufStream, net::TcpListener};
-use tracing::info;
-use serde::Serialize;
-use serde_json;
+use std::convert::Infallible;
+use hyper::{Body, Request, Response, Server};
+use hyper::service::{make_service_fn, service_fn};
+use std::net::SocketAddr;
 
-use http::resp;
-use http::req;
-
-static DEFAULT_PORT: &str = "7877";
-
-// Return mock token
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init();
-
-    let port: u16 = std::env::args()
-        .nth(1)
-        .unwrap_or_else(|| DEFAULT_PORT.to_string())
-        .parse()?;
-
-    let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
-
-    info!("listening on: {}", listener.local_addr()?);
-
-    loop {
-        let (stream, addr) = listener.accept().await?;
-        let mut stream = BufStream::new(stream);
-        tokio::spawn(async move {
-            info!(?addr, "new connection");
-
-            match req::parse_request(&mut stream).await {
-                Ok(req) => info!(?req, "incoming request"),
-                Err(e) => {
-                    info!(?e, "failed to parse request");
-                }
-            }
-
-            let resp = resp::Response::from_string(
-                resp::Status::Ok,
-                String::from("mock_token"),
-            );
-
-            resp.write(&mut stream).await.unwrap();
-        });
+async fn main() {
+    let port = 7877;
+    let addr = SocketAddr::from(([127,0,0,1], port));
+    let server = Server::bind(&addr)
+        .serve(
+            make_service_fn(|_conn| async {Ok::<_, Infallible>(service_fn(handle_request))})
+        );
+    if let Err(e) = server.await {
+        println!("server error: {}", e);
     }
+}
+
+async fn handle_request(_: Request<Body>) -> Result<Response<Body>, Infallible> {
+    Ok(
+        Response::builder()
+            .status(200)
+            .body(Body::from("{\"access_token\": \"acc_tok_123\", \"expires_in\": 1234}"))
+            .unwrap()
+    )
 }

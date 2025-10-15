@@ -1,13 +1,13 @@
 use serde::Deserialize;
-use figment::{Figment, providers::{Format, Toml, Json, Env}};
+use figment::{Figment, providers::{Format, Json}};
 use std::collections::HashMap;
 
-#[derive(Deserialize, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ProviderConfig {
     pub method: String,
     pub url: String,
     pub headers: HashMap<String, String>,
-    pub form: HashMap<String, String>
+    pub body: String
 }
 
 #[derive(Deserialize, Clone)]
