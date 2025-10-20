@@ -4,7 +4,6 @@ use std::collections::HashMap;
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct ProviderConfig {
-    pub method: String,
     pub url: String,
     pub headers: HashMap<String, String>,
     pub body: String

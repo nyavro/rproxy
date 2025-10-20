@@ -10,12 +10,12 @@ struct NoCertificateVerification {}
 impl ServerCertVerifier for NoCertificateVerification {
     fn verify_server_cert(
             &self,
-            end_entity: &rustls::Certificate,
-            intermediates: &[rustls::Certificate],
-            server_name: &rustls::ServerName,
-            scts: &mut dyn Iterator<Item = &[u8]>,
-            ocsp_response: &[u8],
-            now: std::time::SystemTime,
+            _: &rustls::Certificate,
+            _: &[rustls::Certificate],
+            _: &rustls::ServerName,
+            _: &mut dyn Iterator<Item = &[u8]>,
+            _: &[u8],
+            _: std::time::SystemTime,
         ) -> Result<rustls::client::ServerCertVerified, rustls::Error> {
         Ok(ServerCertVerified::assertion())
     }

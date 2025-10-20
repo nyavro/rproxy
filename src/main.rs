@@ -1,9 +1,8 @@
-use std::convert::Infallible;
 use hyper::{Body, Request, Response, Server, Uri};
 use hyper::service::{make_service_fn, service_fn};
-use std::net::SocketAddr;
 use crate::config::configuration;
-use std::sync::Arc;
+use std::{convert::Infallible, net::SocketAddr, collections::HashMap, sync::Arc};
+use tokio::sync::Mutex;
 
 mod config;
 mod fetch_token;
@@ -14,15 +13,17 @@ async fn main() {
     let port = 8081;
     let addr = SocketAddr::from(([127,0,0,1], port));
     let config = Arc::new(configuration::load_configuration().unwrap());
+    let token_cache: Arc<Mutex<HashMap<String, fetch_token::Token>>> = Arc::new(Mutex::new(HashMap::new()));
     let server = Server::bind(&addr)
         .serve(
             make_service_fn(
                 move |_conn| {
+                    let cache = Arc::clone(&token_cache);
                     let config = config.clone();
                     async move { 
                         Ok::<_, Infallible>(
                             service_fn(
-                                move |req| handle_request(req, config.clone())
+                                move |req| handle_request(req, config.clone(), cache.clone())
                             )
                         )
                     }
@@ -34,11 +35,11 @@ async fn main() {
     }
 }
 
-async fn handle_request(req: Request<Body>, config: Arc<configuration::Config>) -> Result<Response<Body>, Infallible> {    
+async fn handle_request(req: Request<Body>, config: Arc<configuration::Config>, token_cache: Arc<Mutex<HashMap<String, fetch_token::Token>>>) -> Result<Response<Body>, Infallible> {    
     let client = client::init_client();
     let uri_str = config.redirect_url.clone() + req.uri().path_and_query().map_or("/", |pq| pq.as_str());
     let backend_uri: Uri = uri_str.parse().unwrap();
-    let headers = fetch_token::collect_headers(req.headers(), &config).await;
+    let headers = fetch_token::collect_headers(req.headers(), &config, token_cache).await;
     let mut proxy_req = Request::builder()
         .method(req.method())
         .uri(backend_uri)
